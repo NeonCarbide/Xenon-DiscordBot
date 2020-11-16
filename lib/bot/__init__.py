@@ -1,8 +1,14 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from discord.ext.commands import Bot as BotBase
+from datetime import datetime
 
-PREFIX = '~'
-OWNER_IDS = [108298219003346944]
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from discord.ext.commands.errors import CommandNotFound
+from discord.ext.commands import Bot as BotBase
+from discord import Intents, Embed
+
+from lib.config import config
+
+PREFIX = config.get_value('prefix')
+OWNER_IDS = config.get_value('ownerids')
 
 class Bot(BotBase):
     def __init__(self) -> None:
@@ -12,7 +18,11 @@ class Bot(BotBase):
         self.ready = False
         self.scheduler = AsyncIOScheduler()
 
-        super().__init__(command_prefix=PREFIX, owner_ids=OWNER_IDS)
+        super().__init__(
+            command_prefix=PREFIX, 
+            owner_ids=OWNER_IDS,
+            intents=Intents.all()
+        )
     
     def run(self, version):
         self.VERSION = version
@@ -30,12 +40,31 @@ class Bot(BotBase):
     async def on_disconnect(self):
         print('Disconnected')
     
+    async def on_error(self, err, *args, **kwargs):
+        if err == 'on_command_error':
+            await args[0].send('Something went wrong')
+
+        raise err
+
+    async def on_command_error(self, ctx, exc):
+        if isinstance(exc, CommandNotFound):
+            pass
+        elif hasattr(exc, 'original'):
+            raise exc.original
+        else:
+            raise exc
+    
     async def on_ready(self):
         if not self.ready:
             self.ready = True
-            # self.guild = self.get_guild(581609258525655041)
+            self.guild = self.get_guild(581609258525655041)
 
             print('Ready')
+
+            channel = self.get_channel(581609258525655043)
+            embed = Embed(title='Status: Online', description='Xenon is now online', colour=0x20A050, timestamp=datetime.utcnow())
+
+            await channel.send(embed=embed)
         else:
             print('Reconnected')
 
