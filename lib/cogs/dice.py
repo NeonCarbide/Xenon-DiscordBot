@@ -18,7 +18,10 @@ class Dice(Cog):
             rolls = [randint(1, value) for i in range(dice)]
 
             await ctx.send(f'{ctx.author.display_name} rolled **{dice_formula}**')
-            await ctx.send(f'**{sum(rolls)}** :: **{"** + **".join([str(r) for r in rolls])}**')
+            if dice > 1:
+                await ctx.send(f'**{sum(rolls)}** :: **{"** + **".join([str(r) for r in rolls])}**')
+            else:
+                await ctx.send(f'Result :: **{sum(rolls)}**')
         else:
             await ctx.send('Too many dice to roll')
     
